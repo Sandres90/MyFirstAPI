@@ -1,72 +1,75 @@
 package co.edu.umanizales.myfirstapi.controller;
 
 import co.edu.umanizales.myfirstapi.model.Location;
-import org.springframework.web.bind.annotation.*;
+import co.edu.umanizales.myfirstapi.service.LocationService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.List;
+
 
 @RestController
-@RequestMapping("/location")
+@RequestMapping(path = "/location")
 public class LocationController {
 
-    private final List<Location> locations = new ArrayList<>();
 
-    public LocationController() {
-        locations.add(new Location("001", "Ukraina", "UA", true));
-        locations.add(new Location("002", "Bogotá", "CO", true));
-        locations.add(new Location("003", "Medellín", "CO", false));
-        locations.add(new Location("004", "Kharkiv", "UA", false));
-        locations.add(new Location("005", "Cali", "CO", false));
+    @Autowired
+    private LocationService locationService;
+
+    @GetMapping
+    public List<Location> getLocations() {
+        return locationService.getLocations();
     }
 
-    @GetMapping("/by-code/{code}")
+    @GetMapping(path = "/byCode/{code}")
     public Location getLocationByCode(@PathVariable String code) {
-        return locations.stream()
-                .filter(loc -> loc.getCode().equalsIgnoreCase(code))
-                .findFirst().orElse(null);
+        return locationService.getLocationByCode(code);
+
     }
 
-    @GetMapping("/by-name/{name}")
+    @GetMapping(path = "/states")
+    public List<Location> getLocationByStates() {
+        return locationService.getStates();
+    }
+
+    @GetMapping(path = "/name/{name}")
     public Location getLocationByName(@PathVariable String name) {
-        return locations.stream()
-                .filter(loc -> loc.getName().equalsIgnoreCase(name))
-                .findFirst().orElse(null);
+        return locationService.getLocationByName(name);
+
     }
 
-    @GetMapping("/by-initials/{letters}")
-    public List<Location> getLocationByInitialLetters(@PathVariable String letters) {
-        return locations.stream()
-                .filter(loc -> loc.getName().toLowerCase().startsWith(letters.toLowerCase()))
-                .collect(Collectors.toList());
+    @GetMapping(path = "/initialLetters/{initial}")
+    public List<Location> getLocationByInitial(@PathVariable String initial) {
+        return locationService.getLocationsByInitialLetter(initial);
     }
 
-    @GetMapping("/by-state-code/{stateCode}")
+    @GetMapping(path = "/StartLetter/{Letters}")
+    public List<Location> getLocationByLetters(@PathVariable String Letters) {
+        return locationService.getLocationByLetter(Letters);
+    }
+
+
+    @GetMapping("/statecode/{stateCode}")
     public List<Location> getLocationByStateCode(@PathVariable String stateCode) {
-        return locations.stream()
-                .filter(loc -> loc.getStateCode().equalsIgnoreCase(stateCode))
-                .collect(Collectors.toList());
-    }
+        return locationService.getLocationByStateCode(stateCode);
 
-    @GetMapping("/states")
-    public List<String> getStates() {
-        return locations.stream()
-                .map(Location::getStateCode)
-                .distinct()
-                .collect(Collectors.toList());
-    }
-
-    @GetMapping("/states/{code}")
-    public String getStateByCode(@PathVariable String code) {
-        boolean exists = locations.stream()
-                .anyMatch(loc -> loc.getStateCode().equalsIgnoreCase(code));
-        return exists ? "State found: " + code : "State not found";
     }
 
     @GetMapping("/capitals")
     public List<Location> getCapitals() {
-        return locations.stream()
-                .filter(Location::isCapital)
-                .collect(Collectors.toList());
+        return locationService.getCapitals();
+    }
+
+
+    @GetMapping(path = "/StateByCode/{stateByCode}")
+    public Location getStateByCode(@PathVariable String stateByCode) {
+        return locationService.getStateByCode(stateByCode);
+    }
+    @GetMapping(path = "/StartEnd/{initial}/{end}")
+    public List<Location> getStartEnd(@PathVariable String initial, @PathVariable String end) {
+        return locationService.getStartEnd(initial,end);
     }
 }

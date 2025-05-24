@@ -1,65 +1,172 @@
 package co.edu.umanizales.myfirstapi.service;
 
 import co.edu.umanizales.myfirstapi.model.Location;
+import com.opencsv.CSVReader;
+import com.opencsv.exceptions.CsvValidationException;
+import jakarta.annotation.PostConstruct;
+import lombok.Getter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.InputStreamReader;
+import java.io.InputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
+@Getter
 public class LocationService {
-    private final List<Location> locations = new ArrayList<>();
 
-    public LocationService() {
-        locations.add(new Location("001", "Ukraina", "UA", true));
-        locations.add(new Location("002", "Bogotá", "CO", true));
-        locations.add(new Location("003", "Medellín", "CO", false));
-        locations.add(new Location("004", "Kharkiv", "UA", false));
-        locations.add(new Location("005", "Cali", "CO", false));
+    private List<Location> locations;
+
+    @Value("${locations.filename:DIVIPOLA-_C_digos_municipios_20250326.csv}")
+    private String locationsFilename;
+
+    @PostConstruct
+    public void readLocationsFromCSV() throws IOException {
+        locations = new ArrayList<>();
+
+        // Departamentos base
+        locations.add(new Location("05", "ANTIOQUIA"));
+        locations.add(new Location("06", "ANTIOQUIA"));
+        locations.add(new Location("07", "ANTIOQUIA"));
+        locations.add(new Location("91", "AMAZONAS"));
+        locations.add(new Location("08", "ATLANTICO"));
+        locations.add(new Location("11", "BOGOTA"));
+        locations.add(new Location("13", "BOLIVAR"));
+        locations.add(new Location("15", "BOYACA"));
+        locations.add(new Location("18", "CAQUETA"));
+        locations.add(new Location("19", "CAUCA"));
+        locations.add(new Location("85", "CASANARE"));
+        locations.add(new Location("20", "CESAR"));
+        locations.add(new Location("27", "CHOCO"));
+        locations.add(new Location("25", "CUNDINAMARCA"));
+        locations.add(new Location("23", "CORDOBA"));
+        locations.add(new Location("94", "GUANIA"));
+        locations.add(new Location("95", "GUAVIARE"));
+        locations.add(new Location("41", "HUILA"));
+        locations.add(new Location("44", "LA GUAJIRA"));
+        locations.add(new Location("47", "MAGDALENA"));
+        locations.add(new Location("50", "META"));
+        locations.add(new Location("52", "NARIÑO"));
+        locations.add(new Location("54", "NORTE DE SANTANDER"));
+        locations.add(new Location("86", "PUTUMAYO"));
+        locations.add(new Location("63", "QUINDIO"));
+        locations.add(new Location("88", "SAN ANDRES y PROVIDENCIA"));
+        locations.add(new Location("68", "SANTANDER"));
+        locations.add(new Location("70", "SUCRE"));
+        locations.add(new Location("73", "TOLIMA"));
+        locations.add(new Location("76", "VALLE DEL CAUCA"));
+        locations.add(new Location("99", "VICHADA"));
+        locations.add(new Location("97", "VAUPES"));
+        locations.add(new Location("81", "ARAUCA"));
+
+        try (
+                InputStream is = getClass().getClassLoader().getResourceAsStream(locationsFilename);
+                CSVReader csvReader = new CSVReader(new InputStreamReader(is))
+        ) {
+            if (is == null) {
+                throw new IOException("Archivo CSV no encontrado: " + locationsFilename);
+            }
+
+            String[] line;
+            csvReader.skip(1); // Saltar encabezado
+            while ((line = csvReader.readNext()) != null) {
+                if (line.length >= 4) {
+                    locations.add(new Location(line[2], line[3]));
+                }
+            }
+
+            System.out.println("Total de ubicaciones cargadas: " + locations.size());
+        } catch (CsvValidationException e) {
+            throw new RuntimeException("Error al leer el archivo CSV", e);
+        }
     }
 
     public Location getLocationByCode(String code) {
         return locations.stream()
-                .filter(loc -> loc.getCode().equalsIgnoreCase(code))
+                .filter(location -> location.getCode().equals(code))
                 .findFirst()
                 .orElse(null);
+    }
+
+    public List<Location> getStates() {
+        List<Location> states = new ArrayList<>();
+        for (Location location : locations) {
+            if (location.getCode().length() == 2) {
+                states.add(location);
+            }
+        }
+        return states;
     }
 
     public Location getLocationByName(String name) {
-        return locations.stream()
-                .filter(loc -> loc.getName().equalsIgnoreCase(name))
-                .findFirst()
-                .orElse(null);
+        for (Location location : locations) {
+            if (location.getDescription().equalsIgnoreCase(name)) {
+                return location;
+            }
+        }
+        return null;
     }
 
-    public List<Location> getLocationsByInitialLetters(String letters) {
-        return locations.stream()
-                .filter(loc -> loc.getName().toLowerCase().startsWith(letters.toLowerCase()))
-                .collect(Collectors.toList());
+    public List<Location> getLocationsByInitialLetter(String letter) {
+        List<Location> result = new ArrayList<>();
+        for (Location location : locations) {
+            if (location.getDescription().startsWith(letter)) {
+                result.add(location);
+            }
+        }
+        return result;
     }
 
-    public List<Location> getLocationsByStateCode(String stateCode) {
-        return locations.stream()
-                .filter(loc -> loc.getStateCode().equalsIgnoreCase(stateCode))
-                .collect(Collectors.toList());
+    public List<Location> getLocationByLetter(String letter) {
+        List<Location> result = new ArrayList<>();
+        for (Location location : locations) {
+            if (location.getCode().equals(letter)) {
+                result.add(location);
+            }
+        }
+        return result;
     }
 
-    public List<String> getStates() {
-        return locations.stream()
-                .map(Location::getStateCode)
-                .distinct()
-                .collect(Collectors.toList());
-    }
-
-    public boolean stateExistsByCode(String code) {
-        return locations.stream()
-                .anyMatch(loc -> loc.getStateCode().equalsIgnoreCase(code));
+    public List<Location> getLocationByStateCode(String stateCode) {
+        List<Location> result = new ArrayList<>();
+        for (Location location : locations) {
+            if (location.getCode().equals(stateCode)) {
+                result.add(location);
+            }
+        }
+        return result;
     }
 
     public List<Location> getCapitals() {
-        return locations.stream()
-                .filter(Location::isCapital)
-                .collect(Collectors.toList());
+        List<Location> capitals = new ArrayList<>();
+        for (Location location : locations) {
+            if (location.getCode().endsWith("01") && location.getCode().length() == 5) {
+                capitals.add(location);
+            }
+        }
+        return capitals;
+    }
+
+    public Location getStateByCode(String stateCode) {
+        for (Location location : locations) {
+            if (location.getCode().equals(stateCode)) {
+                return location;
+            }
+        }
+        return null;
+    }
+
+    public List<Location> getStartEnd(String initial, String end) {
+        List<Location> result = new ArrayList<>();
+        for (Location location : locations) {
+            if (location.getDescription().startsWith(initial) &&
+                    location.getDescription().endsWith(end)) {
+                result.add(location);
+            }
+        }
+        return result;
     }
 }

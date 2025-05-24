@@ -10,9 +10,9 @@ import lombok.Setter;
 @AllArgsConstructor
 @Getter
 @Setter
-public class Location  {
+public class Store  {
     private String code;
-    private String description;
-
-
+    private String name;
+    private String address;
+    private String city;
 }
